@@ -1,0 +1,105 @@
+-- FNAF Archives | MySQL 8.0+ | Ejemplo de usuario: cámbiale la contraseña.
+-- Ejecutar primero desde phpMyAdmin (pestaña SQL) o MySQL CLI.
+CREATE DATABASE IF NOT EXISTS fnaf_archives
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE fnaf_archives;
+
+CREATE TABLE IF NOT EXISTS users (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ username VARCHAR(30) NOT NULL UNIQUE,
+ email VARCHAR(255) NOT NULL UNIQUE,
+ password_hash VARCHAR(255) NOT NULL,
+ role VARCHAR(16) NOT NULL DEFAULT 'user',
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS lore (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ title VARCHAR(160) NOT NULL UNIQUE,
+ summary VARCHAR(500) NOT NULL,
+ body TEXT NOT NULL,
+ position INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS games (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(120) NOT NULL UNIQUE,
+ year INT NOT NULL,
+ description TEXT NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS episodes (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ title VARCHAR(160) NOT NULL UNIQUE,
+ description TEXT NOT NULL,
+ video_url VARCHAR(500) NOT NULL,
+ published_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS posts (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ author_id INT NOT NULL,
+ content TEXT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_posts_author (author_id),
+ CONSTRAINT fk_posts_author FOREIGN KEY(author_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reactions (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ post_id INT NOT NULL,
+ user_id INT NOT NULL,
+ kind VARCHAR(12) NOT NULL,
+ UNIQUE KEY uq_reaction_post_user(post_id,user_id),
+ INDEX idx_reactions_post (post_id),
+ FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+ FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS comments (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ post_id INT NOT NULL,
+ author_id INT NOT NULL,
+ content TEXT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_comments_post (post_id),
+ FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+ FOREIGN KEY(author_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS products (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(160) NOT NULL UNIQUE,
+ `character` VARCHAR(60) NOT NULL,
+ description TEXT NOT NULL,
+ price DECIMAL(10,2) NOT NULL,
+ stock INT NOT NULL DEFAULT 0,
+ official_verified BOOLEAN NOT NULL DEFAULT 0,
+ active BOOLEAN NOT NULL DEFAULT 1
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS orders (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ user_id INT NOT NULL,
+ total DECIMAL(10,2) NOT NULL,
+ status VARCHAR(30) NOT NULL DEFAULT 'pending_payment',
+ payment_preference_id VARCHAR(160) NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_orders_user(user_id),
+ FOREIGN KEY(user_id) REFERENCES users(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS order_items (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ order_id INT NOT NULL,
+ product_id INT NOT NULL,
+ quantity INT NOT NULL,
+ unit_price DECIMAL(10,2) NOT NULL,
+ FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+ FOREIGN KEY(product_id) REFERENCES products(id)
+) ENGINE=InnoDB;
+
+-- Para evitar acceso como root desde FastAPI, crea un usuario de aplicación:
+-- CREATE USER 'fnaf_user'@'localhost' IDENTIFIED BY 'TU_CLAVE_SEGURA';
+-- GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX ON fnaf_archives.* TO 'fnaf_user'@'localhost';
+-- FLUSH PRIVILEGES;

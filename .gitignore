@@ -1,0 +1,25 @@
+# Secretos locales
+.env
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+# Python
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+**/*.pyc
+# IDE
+.idea/
+.vscode/
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins*
+**/.packages
+**/build/
+**/coverage/
+# Datos sensibles
+*.sqlite
+*.db
+.DS_Store
